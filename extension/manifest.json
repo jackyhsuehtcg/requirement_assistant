@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "JIRA Requirement Assistant",
+  "version": "1.0",
+  "description": "AI-powered assistant to refine JIRA issue descriptions using BDD format.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "*://*/*" 
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"], 
+      "js": ["src/content.js"],
+      "css": ["src/styles.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_title": "Requirement Assistant"
+  }
+}

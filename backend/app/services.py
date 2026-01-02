@@ -1,0 +1,374 @@
+import logging
+import re
+from typing import Dict, List, Optional
+from openai import AsyncOpenAI, APIConnectionError, RateLimitError, APIStatusError
+from FlagEmbedding import FlagModel
+from qdrant_client import QdrantClient
+from qdrant_client.http import models as qdrant_models
+from app.config import get_settings, PromptConfig
+from app.schemas import RefineRequest, RetrievedReference
+
+logger = logging.getLogger("uvicorn")
+settings = get_settings()
+
+LANGUAGE_CONFIG = {
+    "zh-TW": {
+        "language_instruction": "Traditional Chinese (繁體中文)",
+        "menu_header": "Menu（功能路徑）",
+        "user_story_header": "User Story Narrative（使用者故事敘述）",
+        "criteria_header": "Criteria",
+        "acceptance_header": "Acceptance Criteria（驗收標準）"
+    },
+    "zh-CN": {
+        "language_instruction": "Simplified Chinese (简体中文)",
+        "menu_header": "Menu（功能路径）",
+        "user_story_header": "User Story Narrative（用户故事叙述）",
+        "criteria_header": "Criteria",
+        "acceptance_header": "Acceptance Criteria（验收标准）"
+    },
+    "en": {
+        "language_instruction": "English",
+        "menu_header": "Menu",
+        "user_story_header": "User Story Narrative",
+        "criteria_header": "Criteria",
+        "acceptance_header": "Acceptance Criteria"
+    }
+}
+
+def resolve_language_config(output_language: str) -> Dict[str, str]:
+    return LANGUAGE_CONFIG.get(output_language, LANGUAGE_CONFIG["zh-TW"])
+
+class VectorService:
+    _model = None
+
+    @classmethod
+    def get_model(cls):
+        if cls._model is None:
+            logger.info("Loading Embedding Model: BAAI/bge-m3...")
+            cls._model = FlagModel('BAAI/bge-m3', use_fp16=True) 
+            logger.info("Embedding Model loaded.")
+        return cls._model
+
+    @classmethod
+    def embed_query(cls, text: str) -> List[float]:
+        model = cls.get_model()
+        return model.encode(text).tolist()
+
+class RAGService:
+    def __init__(self):
+        self.client = QdrantClient(url=settings.QDRANT_URL)
+        self.vector_service = VectorService()
+
+    def _derive_component_team(self, component_name: Optional[str]) -> str:
+        if not component_name:
+            return ""
+        primary = component_name.split(",")[0].strip()
+        if not primary:
+            return ""
+        letters_only = re.sub(r"[^A-Za-z]", "", primary)
+        if len(letters_only) >= 3:
+            return letters_only[:3].upper()
+        return primary[:3].upper()
+
+    def _build_team_filter(self, team: str) -> Optional[qdrant_models.Filter]:
+        if not team:
+            return None
+        should_conditions = [
+            qdrant_models.FieldCondition(
+                key="team_name",
+                match=qdrant_models.MatchValue(value=team)
+            ),
+            qdrant_models.FieldCondition(
+                key="component_team",
+                match=qdrant_models.MatchValue(value=team)
+            )
+        ]
+        filter_kwargs = {"should": should_conditions}
+        filter_fields = getattr(qdrant_models.Filter, "model_fields", None) or getattr(qdrant_models.Filter, "__fields__", None)
+        if filter_fields and "min_should" in filter_fields:
+            filter_kwargs["min_should"] = 1
+        return qdrant_models.Filter(**filter_kwargs)
+
+    def _compute_limits(self, total_limit: int) -> Dict[str, int]:
+        weights = {
+            "jira": 2,
+            "test": 2,
+            "usm": 1
+        }
+        weight_sum = sum(weights.values())
+        unit = max(total_limit // weight_sum, 0)
+        limits = {key: value * unit for key, value in weights.items()}
+        remainder = total_limit - sum(limits.values())
+        for key in ("jira", "test", "usm"):
+            if remainder <= 0:
+                break
+            limits[key] += 1
+            remainder -= 1
+        return limits
+
+    def _extract_text_section(self, text: str, patterns: List[str]) -> str:
+        if not text:
+            return ""
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE | re.DOTALL)
+            if match:
+                return match.group(1).strip()
+        return ""
+
+    def _build_jira_content(self, payload: dict) -> str:
+        jira_key = payload.get("jira_ticket") or payload.get("issue_key") or payload.get("jira_key")
+        title = payload.get("summary") or payload.get("title")
+        component = payload.get("component") or payload.get("component_name")
+        description = (
+            payload.get("description")
+            or payload.get("desc")
+            or self._extract_text_section(
+                payload.get("text", ""),
+                [
+                    r"(?:描述|Description|Desc)\s*[:：]\s*(.*)",
+                ]
+            )
+        )
+        acceptance_criteria = (
+            payload.get("acceptance_criteria")
+            or payload.get("ac")
+            or self._extract_text_section(
+                payload.get("text", ""),
+                [
+                    r"(?:AC|Acceptance\s*Criteria)\s*[:：]\s*(.*)",
+                ]
+            )
+        )
+        text_fallback = payload.get("text", "")
+        if not description and text_fallback:
+            description = text_fallback
+
+        content_parts = [
+            f"JIRA: {jira_key}",
+            f"Summary: {title}",
+        ]
+        if component:
+            content_parts.append(f"Component: {component}")
+        if description:
+            content_parts.append(f"Desc: {description}")
+        if acceptance_criteria:
+            content_parts.append(f"AC: {acceptance_criteria}")
+        return "\n".join(content_parts)
+
+    def _search_collection(
+        self,
+        collection_name: str,
+        vector: List[float],
+        limit: int,
+        team_hint: str,
+        label: str,
+        restrict_to_team: bool
+    ):
+        if limit <= 0:
+            return []
+
+        team_filter = self._build_team_filter(team_hint)
+        if not team_filter:
+            try:
+                return self.client.search(
+                    collection_name=collection_name,
+                    query_vector=vector,
+                    limit=limit
+                )
+            except Exception as e:
+                logger.error(f"Qdrant {label} search failed: {e}")
+                return []
+
+        if restrict_to_team:
+            try:
+                return self.client.search(
+                    collection_name=collection_name,
+                    query_vector=vector,
+                    limit=limit,
+                    query_filter=team_filter
+                )
+            except Exception as e:
+                logger.error(f"Qdrant {label} team search failed: {e}")
+                return []
+
+        hits = []
+        seen_ids = set()
+        try:
+            hits = self.client.search(
+                collection_name=collection_name,
+                query_vector=vector,
+                limit=limit,
+                query_filter=team_filter
+            )
+            seen_ids = {hit.id for hit in hits}
+        except Exception as e:
+            logger.error(f"Qdrant {label} team search failed: {e}")
+            hits = []
+
+        if len(hits) < limit:
+            try:
+                more_hits = self.client.search(
+                    collection_name=collection_name,
+                    query_vector=vector,
+                    limit=limit - len(hits)
+                )
+                for hit in more_hits:
+                    if hit.id not in seen_ids:
+                        hits.append(hit)
+                        seen_ids.add(hit.id)
+            except Exception as e:
+                logger.error(f"Qdrant {label} fallback search failed: {e}")
+
+        return hits
+
+    def search_context(
+        self,
+        query_text: str,
+        total_limit: int = 15,
+        component_team: Optional[str] = None,
+        component_name: Optional[str] = None,
+        restrict_to_team: bool = True
+    ) -> List[RetrievedReference]:
+        vector = self.vector_service.embed_query(query_text)
+        results = []
+
+        team_hint = (component_team or "").strip().upper()
+        if not team_hint:
+            team_hint = self._derive_component_team(component_name)
+
+        limits = self._compute_limits(total_limit)
+
+        usm_hits = self._search_collection(
+            collection_name=settings.QDRANT_COLLECTION_USM,
+            vector=vector,
+            limit=limits["usm"],
+            team_hint=team_hint,
+            label="USM",
+            restrict_to_team=restrict_to_team
+        )
+        for hit in usm_hits:
+            payload = hit.payload
+            content = f"Story: {payload.get('title')}\nDesc: {payload.get('description')}\nI want: {payload.get('i_want')}"
+            results.append(RetrievedReference(
+                source_type="usm_node",
+                title=payload.get("title", "Unknown Story"),
+                content_excerpt=content,
+                relevance_score=hit.score
+            ))
+
+        test_hits = self._search_collection(
+            collection_name=settings.QDRANT_COLLECTION_TEST,
+            vector=vector,
+            limit=limits["test"],
+            team_hint=team_hint,
+            label="Test Case",
+            restrict_to_team=restrict_to_team
+        )
+        for hit in test_hits:
+            payload = hit.payload
+            content = f"TestCase: {payload.get('title')}\nPre: {payload.get('precondition')}\nSteps: {payload.get('steps')}"
+            results.append(RetrievedReference(
+                source_type="test_case",
+                title=payload.get("title", "Unknown Test Case"),
+                content_excerpt=content,
+                relevance_score=hit.score
+            ))
+
+        jira_hits = self._search_collection(
+            collection_name=settings.QDRANT_COLLECTION_JIRA,
+            vector=vector,
+            limit=limits["jira"],
+            team_hint=team_hint,
+            label="JIRA",
+            restrict_to_team=restrict_to_team
+        )
+        for hit in jira_hits:
+            payload = hit.payload
+            content = self._build_jira_content(payload)
+            results.append(RetrievedReference(
+                source_type="jira_reference",
+                title=payload.get("summary") or payload.get("title") or "Unknown JIRA",
+                content_excerpt=content,
+                relevance_score=hit.score
+            ))
+
+        results.sort(key=lambda x: x.relevance_score, reverse=True)
+        return results
+
+class LLMService:
+    def __init__(self):
+        self.provider = settings.LLM_PROVIDER.lower()
+        self.model = settings.LLM_MODEL
+        
+        logger.info(f"LLM Service initialized. Provider: {self.provider}, Model: {self.model}")
+
+        # Default Config (OpenAI Compatible)
+        api_key = "dummy"
+        base_url = None
+        self.extra_headers = {}
+
+        if self.provider == "lmstudio":
+            base_url = settings.LM_STUDIO_URL
+            api_key = "lm-studio"
+        elif self.provider == "openrouter":
+            base_url = "https://openrouter.ai/api/v1"
+            api_key = settings.OPENROUTER_API_KEY
+            self.extra_headers = {
+                "HTTP-Referer": "https://github.com/hideman/requirement_assistant",
+                "X-Title": "JIRA Requirement Assistant",
+            }
+        else:
+            logger.warning(f"Unknown LLM provider '{self.provider}'. Defaulting to OpenRouter.")
+            base_url = "https://openrouter.ai/api/v1"
+            api_key = settings.OPENROUTER_API_KEY
+
+        # Initialize OpenAI Client (Single instance is better for connection pooling, 
+        # but here we init per request or per service lifecycle depending on DI scope.
+        # FastAPI Depends() defaults to request scope, but we can cache it.)
+        self.client = AsyncOpenAI(
+            base_url=base_url,
+            api_key=api_key
+        )
+
+    async def refine_description(self, request: RefineRequest, context_refs: List[RetrievedReference]) -> str:
+        # Format context
+        context_str = ""
+        for ref in context_refs:
+            context_str += f"[{ref.source_type.upper()}] {ref.title}:\n{ref.content_excerpt}\n---\n"
+        
+        if not context_str:
+            context_str = "No specific references found. Rely on general best practices."
+
+        lang_config = resolve_language_config(request.output_language)
+        system_prompt = PromptConfig.get("system_prompt").format(**lang_config)
+        user_template = PromptConfig.get("user_prompt_template")
+        
+        user_prompt = user_template.format(
+            issue_type=request.issue_type,
+            summary=request.summary,
+            context=context_str,
+            draft=request.current_description,
+            output_language=lang_config["language_instruction"]
+        )
+
+        try:
+            completion = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.1,
+                extra_headers=self.extra_headers,
+                # max_tokens=2048 # Optional: Add constraint if needed
+            )
+            return completion.choices[0].message.content
+
+        except RateLimitError:
+            return "Error: Rate limit exceeded (429). Please try again later."
+        except APIConnectionError as e:
+            logger.error(f"Connection error: {e}")
+            return "Error: Could not connect to LLM provider."
+        except APIStatusError as e:
+            logger.error(f"API Error {e.status_code}: {e.message}")
+            return f"Error: Provider returned {e.status_code}"

@@ -1,0 +1,11 @@
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.9.0
+pydantic-settings>=2.5.2
+python-dotenv>=1.0.1
+qdrant-client>=1.7.0
+httpx>=0.27.0
+openai>=1.0.0
+PyYAML>=6.0.1
+FlagEmbedding==1.2.5
+torch>=2.2.0

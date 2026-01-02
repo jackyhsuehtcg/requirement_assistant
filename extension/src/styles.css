@@ -1,0 +1,382 @@
+/* Floating Action Button - Fixed Bottom Right */
+.jra-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #0052cc;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  border: none;
+  cursor: pointer;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.jra-fab:hover {
+  transform: scale(1.05);
+  background-color: #0065ff;
+}
+
+/* Modal Overlay */
+.jra-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Content */
+.jra-modal {
+  background: white;
+  width: 95vw;
+  max-width: 1600px;
+  height: 90vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.jra-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #dfe1e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.jra-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #172b4d;
+}
+
+.jra-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #5e6c84;
+}
+
+/* 3-Column Layout */
+.jra-modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow: hidden; /* Lock body scroll */
+  display: flex;
+  gap: 20px;
+  background: #fafbfc;
+  height: 100%; /* Ensure it fills parent */
+  box-sizing: border-box;
+}
+
+/* Column 1: Input (Left) */
+.jra-col-input {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 15px;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  height: 100%; /* Fill body height */
+  box-sizing: border-box;
+  overflow: hidden; /* Contain children */
+}
+
+/* Column 2: Output (Middle) */
+.jra-col-output {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 15px;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  height: 100%; /* Fill body height */
+  box-sizing: border-box;
+  overflow: hidden; /* Contain children */
+}
+
+/* Column 3: Refs (Right) */
+.jra-col-ref {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f4f5f7;
+  padding: 15px;
+  border-radius: 8px;
+  height: 100%; /* Fill body height */
+  box-sizing: border-box;
+  overflow: hidden; /* Contain children */
+}
+
+/* Container for Ref List to scroll */
+#jra-ref-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 16px; /* Space for scrollbar + toggle button */
+  box-sizing: border-box;
+  scrollbar-gutter: stable;
+}
+
+.jra-ref-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.jra-ref-label {
+  font-weight: 600;
+}
+
+.jra-ref-item {
+  margin-bottom: 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.jra-ref-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+
+.jra-ref-check-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.jra-ref-check {
+  margin: 0;
+}
+
+.jra-ref-title {
+  color: #0052cc;
+  flex: 1;
+  min-width: 0;
+}
+
+.jra-ref-toggle {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0;
+}
+
+.jra-ref-toggle:hover {
+  opacity: 0.85;
+}
+
+.jra-ref-toggle-icon {
+  width: 12px;
+  height: 12px;
+  fill: #0052cc;
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+}
+
+.jra-ref-toggle[aria-expanded="true"] .jra-ref-toggle-icon {
+  transform: rotate(90deg);
+}
+
+.jra-ref-content {
+  color: #42526e;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+.jra-ref-content.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jra-input-options {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jra-input-label {
+  font-size: 12px;
+  color: #42526e;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.jra-select {
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  background: #fff;
+  color: #172b4d;
+}
+
+/* Textareas */
+.jra-textarea {
+  width: 100%;
+  flex: 1;
+  padding: 8px; /* Reduced from 12px */
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  font-family: "SFMono-Medium", "SF Mono", "Segoe UI Mono", "Roboto Mono", "Ubuntu Mono", Menlo, Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  margin-top: 10px;
+  box-sizing: border-box; 
+  white-space: pre-wrap;
+  overflow-y: auto; /* Ensure scroll */
+  min-height: 0; /* Crucial for flex child scrolling */
+}
+
+.jra-textarea:focus {
+  border-color: #4c9aff;
+  outline: none;
+}
+
+/* Visual View Container */
+.jra-visual-view {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  overflow-y: auto; /* Ensure scroll */
+  margin-top: 10px;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  box-sizing: border-box;
+  min-height: 0; /* Crucial for flex child scrolling */
+}
+
+.jra-visual-view .jra-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.jra-visual-view .jra-table th,
+.jra-visual-view .jra-table td {
+  border: 1px solid #dfe1e6;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.jra-visual-view .jra-table th {
+  background: #f4f5f7;
+  font-weight: 600;
+}
+
+/* ... existing tabs styles ... */
+
+/* Buttons */
+.jra-btn {
+  padding: 8px 16px; /* Reduced padding slightly */
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.jra-btn-primary {
+  background: #0052cc;
+  color: white;
+  /* width: 100%; REMOVED: Let it size to content */
+}
+
+
+.jra-btn-primary:hover {
+  background: #0065ff;
+}
+
+.jra-btn-primary:disabled {
+  background: #dfe1e6;
+  color: #a5adba;
+  cursor: not-allowed;
+}
+
+.jra-btn-secondary {
+  background: rgba(9, 30, 66, 0.04);
+  color: #42526e;
+}
+
+/* Spinner */
+.jra-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #0052cc;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Toast */
+.jra-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #36b37e;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 100001;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.jra-toast.show {
+  opacity: 1;
+}
+
+.jra-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #dfe1e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: white;
+}
