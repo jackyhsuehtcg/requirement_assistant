@@ -59,25 +59,30 @@ class RAGService:
         self.client = QdrantClient(url=settings.QDRANT_URL)
         self.vector_service = VectorService()
 
-    def _build_min_should_value(self, count: int, field_info):
+    def _build_min_should_value(self, count: int, field_info, conditions):
         field_type = getattr(field_info, "annotation", None) or getattr(field_info, "type_", None)
         if field_type is int:
-            return count
+            return count, False
         if field_type is not None:
             args = get_args(field_type) or ()
             if int in args:
-                return count
+                return count, False
 
         min_should_cls = getattr(qdrant_models, "MinShould", None)
         if not min_should_cls:
-            return count
+            return count, False
 
         min_should_fields = (
             getattr(min_should_cls, "model_fields", None)
             or getattr(min_should_cls, "__fields__", None)
         )
         candidate_fields = []
+        conditions_field = None
         if min_should_fields:
+            for name in ("conditions", "condition"):
+                if name in min_should_fields:
+                    conditions_field = name
+                    break
             for name in ("min_count", "count", "value"):
                 if name in min_should_fields:
                     candidate_fields.append(name)
@@ -86,13 +91,21 @@ class RAGService:
         else:
             candidate_fields = ["min_count", "count", "value"]
 
+        if conditions_field:
+            min_count_field = candidate_fields[0] if candidate_fields else "min_count"
+            payload = {conditions_field: conditions or [], min_count_field: count}
+            try:
+                return min_should_cls(**payload), True
+            except Exception:
+                return payload, True
+
         for name in candidate_fields:
             try:
-                return min_should_cls(**{name: count})
+                return min_should_cls(**{name: count}), False
             except Exception:
                 continue
 
-        return {candidate_fields[0]: count} if candidate_fields else {"min_count": count}
+        return ({candidate_fields[0]: count} if candidate_fields else {"min_count": count}), False
 
     def _derive_component_team(self, component_name: Optional[str]) -> str:
         if not component_name:
@@ -121,7 +134,14 @@ class RAGService:
         filter_kwargs = {"should": should_conditions}
         filter_fields = getattr(qdrant_models.Filter, "model_fields", None) or getattr(qdrant_models.Filter, "__fields__", None)
         if filter_fields and "min_should" in filter_fields:
-            filter_kwargs["min_should"] = self._build_min_should_value(1, filter_fields["min_should"])
+            min_should_value, uses_conditions = self._build_min_should_value(
+                1,
+                filter_fields["min_should"],
+                should_conditions
+            )
+            filter_kwargs["min_should"] = min_should_value
+            if uses_conditions:
+                filter_kwargs.pop("should", None)
         return qdrant_models.Filter(**filter_kwargs)
 
     def _compute_limits(self, total_limit: int) -> Dict[str, int]:
