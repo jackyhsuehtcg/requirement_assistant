@@ -1,9 +1,31 @@
 // JIRA Requirement Assistant - Content Script (Manual Mode)
 
-const API_URL = "http://localhost:8000/api/v1/refine";
+const DEFAULT_API_BASE_URL = "http://10.80.1.49:8000";
+const STORAGE_KEY = "jraApiBaseUrl";
 let isFabInjected = false;
 let modalOverlay = null;
 let lastReferences = [];
+
+function normalizeBaseUrl(value) {
+  return value.replace(/\/+$/, "");
+}
+
+function getApiBaseUrl() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get({ [STORAGE_KEY]: DEFAULT_API_BASE_URL }, (result) => {
+      if (chrome.runtime?.lastError) {
+        resolve(DEFAULT_API_BASE_URL);
+        return;
+      }
+      resolve(result[STORAGE_KEY] || DEFAULT_API_BASE_URL);
+    });
+  });
+}
+
+async function getApiUrl() {
+  const baseUrl = await getApiBaseUrl();
+  return `${normalizeBaseUrl(baseUrl)}/api/v1/refine`;
+}
 
 // Initialization
 function init() {
@@ -475,7 +497,8 @@ async function submitToAI(options = {}) {
       payload.selected_references = selectedReferences;
     }
 
-    const response = await fetch(API_URL, {
+    const apiUrl = await getApiUrl();
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)

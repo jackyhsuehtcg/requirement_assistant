@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JRA Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>JRA Settings</h1>
+        <p class="subtitle">Configure the backend API base URL used by the extension.</p>
+      </header>
+
+      <form id="settings-form" class="panel">
+        <label for="api-base-url">API Base URL</label>
+        <input
+          type="text"
+          id="api-base-url"
+          name="api-base-url"
+          placeholder="http://10.80.1.49:8000"
+          autocomplete="off"
+          spellcheck="false"
+          required
+        />
+        <div class="actions">
+          <button type="submit">Save</button>
+          <span id="status" role="status" aria-live="polite"></span>
+        </div>
+        <p class="hint">Example: http://10.80.1.49:8000</p>
+      </form>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

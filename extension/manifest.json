@@ -28,5 +28,9 @@
   ],
   "action": {
     "default_title": "Requirement Assistant"
+  },
+  "options_ui": {
+    "page": "src/options.html",
+    "open_in_tab": true
   }
 }
