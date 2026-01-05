@@ -4,8 +4,9 @@
 Users need to change the backend API base URL without editing source code, especially outside localhost.
 
 ## What Changes
-- Add a Chrome extension options page to view and edit the backend API base URL (default `http://10.80.1.49:8000`).
+- Add a Chrome extension options page to view and edit the backend API base URL (default `http://10.80.1.49:8787`).
 - Persist the base URL and use it to build the `/api/v1/refine` endpoint for requests.
+- Add a test connection button on the options page that reports detailed failure reasons.
 - Update the extension manifest to register the options page.
 
 ## Impact

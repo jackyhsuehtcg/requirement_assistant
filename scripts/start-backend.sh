@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PORT=8787
+HOST=0.0.0.0
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BACKEND_DIR="${ROOT_DIR}/backend"
@@ -19,4 +20,4 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 
 cd "${BACKEND_DIR}"
-exec uvicorn main:app --reload --port "${PORT}"
+exec uvicorn main:app --reload --host "${HOST}" --port "${PORT}"

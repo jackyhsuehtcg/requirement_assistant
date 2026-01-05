@@ -1,6 +1,6 @@
 // JIRA Requirement Assistant - Content Script (Manual Mode)
 
-const DEFAULT_API_BASE_URL = "http://10.80.1.49:8000";
+const DEFAULT_API_BASE_URL = "http://10.80.1.49:8787";
 const STORAGE_KEY = "jraApiBaseUrl";
 let isFabInjected = false;
 let modalOverlay = null;

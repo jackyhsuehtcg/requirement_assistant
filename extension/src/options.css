@@ -77,6 +77,7 @@ input[type="text"]:focus {
   align-items: center;
   gap: 12px;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -97,9 +98,56 @@ button:hover {
   background: var(--accent-dark);
 }
 
-#status {
+.button-secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(47, 93, 138, 0.5);
+  box-shadow: none;
+}
+
+.button-secondary:hover {
+  background: rgba(47, 93, 138, 0.1);
+  box-shadow: none;
+}
+
+#save-status {
   color: var(--accent-dark);
   font-weight: 600;
+}
+
+.test-output {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(47, 93, 138, 0.35);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.test-status {
+  font-weight: 600;
+}
+
+.test-status.success {
+  color: #1f7a4a;
+}
+
+.test-status.error {
+  color: #b42318;
+}
+
+.test-status.info {
+  color: var(--accent-dark);
+}
+
+.test-details {
+  margin: 10px 0 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(31, 41, 51, 0.05);
+  color: #1f2933;
+  font-family: "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
 }
 
 .hint {
