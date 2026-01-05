@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, get_args
 from openai import AsyncOpenAI, APIConnectionError, RateLimitError, APIStatusError
 from FlagEmbedding import FlagModel
 from qdrant_client import QdrantClient
@@ -59,6 +59,41 @@ class RAGService:
         self.client = QdrantClient(url=settings.QDRANT_URL)
         self.vector_service = VectorService()
 
+    def _build_min_should_value(self, count: int, field_info):
+        field_type = getattr(field_info, "annotation", None) or getattr(field_info, "type_", None)
+        if field_type is int:
+            return count
+        if field_type is not None:
+            args = get_args(field_type) or ()
+            if int in args:
+                return count
+
+        min_should_cls = getattr(qdrant_models, "MinShould", None)
+        if not min_should_cls:
+            return count
+
+        min_should_fields = (
+            getattr(min_should_cls, "model_fields", None)
+            or getattr(min_should_cls, "__fields__", None)
+        )
+        candidate_fields = []
+        if min_should_fields:
+            for name in ("min_count", "count", "value"):
+                if name in min_should_fields:
+                    candidate_fields.append(name)
+            if not candidate_fields:
+                candidate_fields = [next(iter(min_should_fields.keys()))]
+        else:
+            candidate_fields = ["min_count", "count", "value"]
+
+        for name in candidate_fields:
+            try:
+                return min_should_cls(**{name: count})
+            except Exception:
+                continue
+
+        return {candidate_fields[0]: count} if candidate_fields else {"min_count": count}
+
     def _derive_component_team(self, component_name: Optional[str]) -> str:
         if not component_name:
             return ""
@@ -86,7 +121,7 @@ class RAGService:
         filter_kwargs = {"should": should_conditions}
         filter_fields = getattr(qdrant_models.Filter, "model_fields", None) or getattr(qdrant_models.Filter, "__fields__", None)
         if filter_fields and "min_should" in filter_fields:
-            filter_kwargs["min_should"] = 1
+            filter_kwargs["min_should"] = self._build_min_should_value(1, filter_fields["min_should"])
         return qdrant_models.Filter(**filter_kwargs)
 
     def _compute_limits(self, total_limit: int) -> Dict[str, int]:
