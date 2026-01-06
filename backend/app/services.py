@@ -18,7 +18,8 @@ LANGUAGE_CONFIG = {
         "user_story_header": "User Story Narrative（使用者故事敘述）",
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications（技術規格）",
-        "acceptance_header": "Acceptance Criteria（驗收標準）"
+        "acceptance_header": "Acceptance Criteria（驗收標準）",
+        "questions_header": "Developer Questions（開發者提問）"
     },
     "zh-CN": {
         "language_instruction": "Simplified Chinese (简体中文)",
@@ -26,7 +27,8 @@ LANGUAGE_CONFIG = {
         "user_story_header": "User Story Narrative（用户故事叙述）",
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications（技术规格）",
-        "acceptance_header": "Acceptance Criteria（验收标准）"
+        "acceptance_header": "Acceptance Criteria（验收标准）",
+        "questions_header": "Developer Questions（开发者提问）"
     },
     "en": {
         "language_instruction": "English",
@@ -34,7 +36,8 @@ LANGUAGE_CONFIG = {
         "user_story_header": "User Story Narrative",
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications",
-        "acceptance_header": "Acceptance Criteria"
+        "acceptance_header": "Acceptance Criteria",
+        "questions_header": "Developer Questions"
     }
 }
 

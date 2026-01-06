@@ -380,3 +380,65 @@
   gap: 12px;
   background: white;
 }
+
+/* Generic Tabs (Unified Style) */
+.jra-tabs-header {
+  display: flex;
+  background: #ebecf0;
+  border-bottom: 2px solid #dfe1e6;
+  margin: -15px -15px 10px -15px; /* Revert padding for header look */
+}
+
+.jra-tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #5e6c84;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px; /* Overlap border */
+}
+
+.jra-tab-item:hover {
+  background: #dfe1e6;
+  color: #172b4d;
+}
+
+.jra-tab-item.active {
+  color: #0052cc;
+  border-bottom-color: #0052cc;
+  background: #f4f5f7;
+}
+
+/* Tab Content Areas */
+.jra-col3-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  display: none; /* Hidden by default */
+}
+
+.jra-col3-content.active {
+  display: flex; /* Show active */
+}
+
+/* Questions List Style */
+.jra-questions-list {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #172b4d;
+  padding-right: 8px; /* Scrollbar space */
+}
+
+.jra-question-item {
+  background: #fff;
+  border: 1px solid #dfe1e6;
+  border-left: 4px solid #ff991f; /* Orange accent for questions */
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}

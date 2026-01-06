@@ -82,6 +82,18 @@ system_prompt: |
        # 456
   - Language: {language_instruction} for content, keep the headers exactly as shown in the template.
 
+  ADDITIONAL INSTRUCTION - DEVELOPER PERSPECTIVE:
+  - After completing the PRD content, simulate both a **Senior Backend Developer** and a **Senior Frontend Developer** reviewing this requirement.
+  - Imagine you are asking the **Product Manager (PM)** for clarification.
+  - **DO NOT** ask about technical implementation details (e.g., API endpoints, URL paths, database schema, specific algorithms) unless they directly impact the business logic. Assume the dev team will decide those.
+  - **FOCUS ON** business rules, missing edge cases, UI/UX behavior clarifications, and logical contradictions.
+  - Formulate these as clear questions in the "{questions_header}" section.
+  - If everything is perfect (rare), state "None".
+
+  h1. {questions_header}
+   * *<Question 1: ...>*
+   * *<Question 2: ...>*
+
 user_prompt_template: |
   Basic Information:
   - Issue Type: {issue_type}

@@ -270,13 +270,10 @@ function showModal(initialText) {
         
         <!-- Col 1: Input -->
         <div class="jra-col-input">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-              <label style="font-weight:600;">Original Draft (Editable)</label>
-              <div class="jra-tabs">
-                 <button class="jra-tab-btn active" data-target="input" data-mode="text">Text</button>
-                 <button class="jra-tab-btn" data-target="input" data-mode="visual">Visual</button>
-              </div>
-           </div>
+          <div class="jra-tabs-header">
+             <div class="jra-tab-item active" data-target="input" data-mode="text">Original Draft</div>
+             <div class="jra-tab-item" data-target="input" data-mode="visual">Visual Preview</div>
+          </div>
           
           <textarea class="jra-textarea" id="jra-input-text">${escapeHtml(initialText)}</textarea>
           <div class="jra-visual-view" id="jra-input-visual" style="display:none;"></div>
@@ -306,12 +303,9 @@ function showModal(initialText) {
 
         <!-- Col 2: Output -->
         <div class="jra-col-output">
-           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-              <label style="font-weight:600;">AI Suggestion</label>
-              <div class="jra-tabs">
-                 <button class="jra-tab-btn active" data-target="output" data-mode="text">Text</button>
-                 <button class="jra-tab-btn" data-target="output" data-mode="visual">Visual</button>
-              </div>
+           <div class="jra-tabs-header">
+              <div class="jra-tab-item active" data-target="output" data-mode="text">AI Suggestion</div>
+              <div class="jra-tab-item" data-target="output" data-mode="visual">Visual Preview</div>
            </div>
            
            <div id="jra-output-container" style="flex:1; display:flex; flex-direction:column; position:relative; min-height:0; overflow:hidden;">
@@ -328,15 +322,29 @@ function showModal(initialText) {
 
         <!-- Col 3: Refs -->
         <div class="jra-col-ref">
-           <div class="jra-ref-top">
-              <label class="jra-ref-label">References</label>
-              <button class="jra-btn jra-btn-secondary" id="jra-resuggest" type="button" disabled>
-                 重新建議
-              </button>
-           </div>
-           <div id="jra-ref-list">
-              <p style="color:#999">References will appear here after AI processing.</p>
-           </div>
+          <div class="jra-tabs-header">
+            <div class="jra-tab-item active" data-tab="questions">Questions</div>
+            <div class="jra-tab-item" data-tab="context">Context</div>
+          </div>
+          
+          <div id="jra-tab-questions" class="jra-col3-content active">
+            <div style="margin-bottom:8px; font-weight:600; color:#172b4d;">Developer Questions (PM Focus)</div>
+            <div id="jra-questions-list" class="jra-questions-list">
+              <div style="color:#6b778c; font-style:italic;">Generate requirement to see questions...</div>
+            </div>
+          </div>
+
+          <div id="jra-tab-context" class="jra-col3-content">
+            <div class="jra-ref-top">
+               <span class="jra-ref-label">Reference Context</span>
+               <button class="jra-btn jra-btn-secondary" id="jra-resuggest" type="button" disabled>
+                  重新建議
+               </button>
+            </div>
+             <div id="jra-ref-list">
+                <p style="color:#999">References will appear here after AI processing.</p>
+             </div>
+          </div>
         </div>
 
       </div>
@@ -381,16 +389,30 @@ function showModal(initialText) {
     toggleBtn.setAttribute('title', isCollapsed ? '收起' : '展開');
   });
 
-  // Tab Switching (Generic)
-  const tabs = modalOverlay.querySelectorAll('.jra-tab-btn');
-  tabs.forEach(tab => {
+  // Tab Switching (Col 1 & 2: View Mode)
+  const modeTabs = modalOverlay.querySelectorAll('.jra-tab-item[data-target]');
+  modeTabs.forEach(tab => {
      tab.addEventListener('click', () => {
         const target = tab.dataset.target; // 'input' or 'output'
-        // Deactivate siblings
-        tab.parentElement.querySelectorAll('.jra-tab-btn').forEach(t => t.classList.remove('active'));
+        // Deactivate siblings in the same header
+        tab.parentElement.querySelectorAll('.jra-tab-item').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         toggleViewMode(target, tab.dataset.mode);
      });
+  });
+
+  // Tab Switching (Col 3: Questions/Context)
+  const col3Tabs = modalOverlay.querySelectorAll('.jra-tab-item[data-tab]');
+  col3Tabs.forEach(tab => {
+    tab.onclick = () => {
+      // Deactivate siblings in the same header
+      tab.parentElement.querySelectorAll('.jra-tab-item').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      const targetId = "jra-tab-" + tab.dataset.tab;
+      modalOverlay.querySelectorAll(".jra-col3-content").forEach(c => c.classList.remove("active"));
+      document.getElementById(targetId).classList.add("active");
+    };
   });
 }
 
@@ -498,19 +520,44 @@ async function submitToAI(options = {}) {
     }
 
     const apiUrl = await getApiUrl();
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    
+    // Delegate to Background Script to avoid CSP/Mixed Content issues
+    const data = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+            action: "refineDescription",
+            payload: {
+                apiUrl: apiUrl,
+                ...payload
+            }
+        }, (res) => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+            } else if (res && res.success) {
+                resolve(res.data);
+            } else {
+                reject(new Error(res ? res.error : "Unknown background error"));
+            }
+        });
     });
-
-    if (!response.ok) throw new Error("API Request failed");
-
-    const data = await response.json();
     
     // Success: Render
-    renderOutput(data.refined_content);
-    renderReferences(data.references);
+    let refinedText = data.refined_content || "";
+    
+    // Extract Questions
+    const { cleanWiki, questions } = extractQuestions(refinedText);
+    
+    renderOutput(cleanWiki);
+    renderQuestions(questions);
+
+    // Switch tab to Questions (with safety check)
+    const questionsTab = document.querySelector('.jra-tab-item[data-tab="questions"]');
+    if (questionsTab) questionsTab.click();
+
+    // Render References
+    if (data.references) {
+        lastReferences = data.references; // Assuming lastReferences is the global store
+        renderReferences(data.references);
+    }
     
     // Start Cooldown
     startCooldown(inputBtn);
@@ -555,9 +602,69 @@ function renderOutput(text) {
   visualDiv.innerHTML = simpleWikiParser(text);
   
   // Default to Text mode for Output
-  const activeTab = document.querySelector('.jra-tab-btn[data-target="output"].active');
+  const activeTab = document.querySelector('.jra-tab-item[data-target="output"].active');
   const mode = activeTab ? activeTab.dataset.mode : 'text';
   toggleViewMode('output', mode);
+}
+
+// --- Utility: Question Extraction ---
+
+function extractQuestions(wikiText) {
+    // Look for header "h1. Developer Questions" or similar localized versions
+    const headerRegex = /h1\.\s*(Developer Questions|Developer Questions（開發者提問）|Developer Questions（开发者提问）|Developer Questions.*)/i;
+    const match = wikiText.match(headerRegex);
+    
+    if (!match) {
+        return { cleanWiki: wikiText, questions: [] };
+    }
+    
+    const startIndex = match.index;
+    const sectionTitle = match[0];
+    const contentAfter = wikiText.substring(startIndex + sectionTitle.length);
+    
+    // The clean wiki is everything before the questions header
+    const cleanWiki = wikiText.substring(0, startIndex).trim();
+
+    // Extract lines that look like questions (bullet points)
+    const lines = contentAfter.split('\n');
+    const questions = [];
+    
+    for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith('h1.')) break; 
+        if (line.startsWith('----')) break; 
+        
+        if (line.match(/^[\*\#\-]+\s*/)) {
+             let qText = line.replace(/^[\*\#\-]+\s*/, '');
+             qText = qText.replace(/^\*(.*)\*$/, '$1'); 
+             qText = qText.replace(/^_(.*)_$/, '$1');
+             
+             if (qText.trim().length > 2 && !qText.includes("None")) {
+                 questions.push(qText.trim());
+             }
+        }
+    }
+    
+    return { cleanWiki, questions };
+}
+
+function renderQuestions(questions) {
+    const listEl = document.getElementById("jra-questions-list");
+    if (!listEl) return;
+    
+    listEl.innerHTML = "";
+    
+    if (!questions || questions.length === 0) {
+        listEl.innerHTML = '<div style="color:#6b778c; padding:8px;">No questions generated.</div>';
+        return;
+    }
+    
+    questions.forEach(q => {
+        const div = document.createElement("div");
+        div.className = "jra-question-item";
+        div.textContent = q;
+        listEl.appendChild(div);
+    });
 }
 
 function renderReferences(refs) {
