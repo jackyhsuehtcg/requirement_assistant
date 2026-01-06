@@ -17,6 +17,7 @@ LANGUAGE_CONFIG = {
         "menu_header": "Menu（功能路徑）",
         "user_story_header": "User Story Narrative（使用者故事敘述）",
         "criteria_header": "Criteria",
+        "technical_header": "Technical Specifications（技術規格）",
         "acceptance_header": "Acceptance Criteria（驗收標準）"
     },
     "zh-CN": {
@@ -24,6 +25,7 @@ LANGUAGE_CONFIG = {
         "menu_header": "Menu（功能路径）",
         "user_story_header": "User Story Narrative（用户故事叙述）",
         "criteria_header": "Criteria",
+        "technical_header": "Technical Specifications（技术规格）",
         "acceptance_header": "Acceptance Criteria（验收标准）"
     },
     "en": {
@@ -31,6 +33,7 @@ LANGUAGE_CONFIG = {
         "menu_header": "Menu",
         "user_story_header": "User Story Narrative",
         "criteria_header": "Criteria",
+        "technical_header": "Technical Specifications",
         "acceptance_header": "Acceptance Criteria"
     }
 }

@@ -8,17 +8,21 @@ system_prompt: |
 
   CORE INSTRUCTION:
   - **Refine:** Standardize the language and format of the user's draft.
-  - **Augment (Conservative):** Check the "Reference Context". You may add missing scenarios ONLY IF they are:
+  - **Cover Draft First:** Capture and restate every explicit requirement and constraint from the user's draft before adding any supplements.
+  - **Augment (Conservative):** After full draft coverage, check the "Reference Context". You may add missing scenarios ONLY IF they are:
     1. Standard edge cases (e.g., validation errors, empty states).
     2. *Explicitly present* in the provided Reference Context (Test Cases).
     **DO NOT** invent new features or business logic that is not supported by the draft or the reference context. Stick strictly to the intended scope.
   - **Complete:** Ensure the User Story covers the "Who, What, Why" and the AC covers "Happy Path" and essential "Unhappy Paths".
+  - **Technical Specifications:** Include only technical constraints, integration details, or non-functional requirements explicitly present in the draft or reference context. If none are present, leave the Technical Specifications section empty (no bullets).
   - **Preserve Notes/Quotes:** Preserve any Note/註釋/引用/Quote paragraphs from the draft. Keep their wording as-is as much as possible and do not drop them.
-  - **Preserve Links + Purpose:** Preserve every link in the draft/reference context. Keep the original URL and link text. For each link, add a short purpose label in the output language right after it, e.g., `（用途：需求依據）`. If purpose is unclear, use `（用途：參考）` and do not remove the link.
+  - **Reference + Link Alignment:** When citing reference context or links, ensure the description matches the referenced content and avoid unrelated text.
+  - **Preserve Links + Purpose:** Preserve every link in the draft/reference context and keep URLs unchanged. If link text is inaccurate, you may correct it but MUST mark it with `（連結文字已修正）`. For each link, add a short purpose label in the output language immediately after it, e.g., `（用途：需求依據）`. If purpose is unclear, use `（用途：參考）` and do not remove the link. When correcting link text, place the correction mark immediately after the purpose label.
   - **Placement for Notes/Quotes:** If notes/quotes do not clearly belong to a scenario, place them under Criteria using labeled bullets like `* *【Note】* ...` or `* *【引用】* ...` to keep the structure consistent.
   - **Preserve Tables:** If the draft includes tables, preserve them as much as possible in the output using JIRA table syntax (header rows with `||` and data rows with `|`). Do not flatten tables into plain text or lists.
 
   You MUST follow this output format strictly (JIRA Wiki Markup):
+  Section order MUST be: Menu -> User Story Narrative -> Criteria -> Technical Specifications -> Acceptance Criteria.
 
   h1. {menu_header}
    * *Suggest a likely menu path based on the feature (e.g., System > Module > Feature)*
@@ -33,6 +37,10 @@ system_prompt: |
   h1. {criteria_header}
    * <General Rule / Validation 1>
    * <General Rule / Validation 2>
+
+  ----
+  h1. {technical_header}
+   * <Technical constraint / integration detail / non-functional requirement>
 
   ----
   h1. {acceptance_header}
@@ -55,7 +63,7 @@ system_prompt: |
   - Consistency: If you introduce subsection labels, format all peer labels consistently using the same bracket style like `* *【標題】*`.
   - Bold: Use *text* for bolding keywords like Given/When/Then/As a/I want/So that.
   - Separator: Use four dashes "----" between major sections.
-  - Links: Use JIRA wiki link syntax `[Text|URL]` and keep URLs unchanged. Add the purpose label immediately after each link.
+  - Links: Use JIRA wiki link syntax `[Text|URL]` and keep URLs unchanged. Add the purpose label immediately after each link. If link text is corrected, append `（連結文字已修正）` immediately after the purpose label.
   - Markup Examples:
       Bold: *123*
       Italic: _123_
