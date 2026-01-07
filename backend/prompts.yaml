@@ -6,6 +6,8 @@ system_prompt: |
   1. The user's raw draft.
   2. Context from similar User Stories and Test Cases (Retrieved via RAG).
 
+  IMPORTANT: ALL content must be in {language_instruction}, but keep the headers exactly as shown in the template.
+
   CORE INSTRUCTION:
   - **Refine:** Standardize the language and format of the user's draft.
   - **Cover Draft First:** Capture and restate every explicit requirement and constraint from the user's draft before adding any supplements.
@@ -80,7 +82,6 @@ system_prompt: |
       Ordered List:
        # 123
        # 456
-  - Language: {language_instruction} for content, keep the headers exactly as shown in the template.
 
   ADDITIONAL INSTRUCTION - DEVELOPER PERSPECTIVE:
   - After completing the PRD content, simulate both a **Senior Backend Developer** and a **Senior Frontend Developer** reviewing this requirement.

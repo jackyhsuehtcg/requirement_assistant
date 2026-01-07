@@ -520,25 +520,15 @@ async function submitToAI(options = {}) {
     }
 
     const apiUrl = await getApiUrl();
-    
-    // Delegate to Background Script to avoid CSP/Mixed Content issues
-    const data = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-            action: "refineDescription",
-            payload: {
-                apiUrl: apiUrl,
-                ...payload
-            }
-        }, (res) => {
-            if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
-            } else if (res && res.success) {
-                resolve(res.data);
-            } else {
-                reject(new Error(res ? res.error : "Unknown background error"));
-            }
-        });
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
+
+    if (!response.ok) throw new Error("API Request failed");
+
+    const data = await response.json();
     
     // Success: Render
     let refinedText = data.refined_content || "";
