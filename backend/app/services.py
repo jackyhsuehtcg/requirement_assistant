@@ -19,7 +19,13 @@ LANGUAGE_CONFIG = {
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications（技術規格）",
         "acceptance_header": "Acceptance Criteria（驗收標準）",
-        "questions_header": "Developer Questions（開發者提問）"
+        "questions_header": "Developer Questions（開發者提問）",
+        # QA Headers
+        "env_header": "Environment（環境資訊）",
+        "steps_header": "Steps to Reproduce（重現步驟）",
+        "actual_header": "Actual Result（錯誤結果）",
+        "expected_header": "Expected Result（預期結果）",
+        "probability_header": "Occurrence Probability（發生機率）"
     },
     "zh-CN": {
         "language_instruction": "Simplified Chinese (简体中文)",
@@ -28,7 +34,13 @@ LANGUAGE_CONFIG = {
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications（技术规格）",
         "acceptance_header": "Acceptance Criteria（验收标准）",
-        "questions_header": "Developer Questions（开发者提问）"
+        "questions_header": "Developer Questions（开发者提问）",
+        # QA Headers
+        "env_header": "Environment（环境信息）",
+        "steps_header": "Steps to Reproduce（重现步骤）",
+        "actual_header": "Actual Result（实际结果）",
+        "expected_header": "Expected Result（预期结果）",
+        "probability_header": "Occurrence Probability（发生机率）"
     },
     "en": {
         "language_instruction": "English",
@@ -37,7 +49,13 @@ LANGUAGE_CONFIG = {
         "criteria_header": "Criteria",
         "technical_header": "Technical Specifications",
         "acceptance_header": "Acceptance Criteria",
-        "questions_header": "Developer Questions"
+        "questions_header": "Developer Questions",
+        # QA Headers
+        "env_header": "Environment",
+        "steps_header": "Steps to Reproduce",
+        "actual_header": "Actual Result",
+        "expected_header": "Expected Result",
+        "probability_header": "Occurrence Probability"
     }
 }
 
@@ -401,8 +419,26 @@ class LLMService:
             context_str = "No specific references found. Rely on general best practices."
 
         lang_config = resolve_language_config(request.output_language)
-        system_prompt = PromptConfig.get("system_prompt").format(**lang_config)
-        user_template = PromptConfig.get("user_prompt_template")
+        
+        # Decide prompt based on issue type
+        issue_type_lower = (request.issue_type or "").lower()
+        if "bug" in issue_type_lower:
+            prompt_config = PromptConfig.get("qa")
+        else:
+            prompt_config = PromptConfig.get("pm")
+        
+        # Fallback if config is missing (safety check)
+        if not prompt_config:
+            logger.warning("Prompt configuration not found, falling back to default PM prompt.")
+            # Depending on how logic evolved, if 'pm' key missing in yaml, this might fail.
+            # But we just overwrote yaml with both keys.
+            prompt_config = PromptConfig.get("pm") or {}
+
+        system_prompt_raw = prompt_config.get("system_prompt", "")
+        # Apply strict formatting only if prompt exists
+        system_prompt = system_prompt_raw.format(**lang_config) if system_prompt_raw else ""
+        
+        user_template = prompt_config.get("user_prompt_template", "")
         
         user_prompt = user_template.format(
             issue_type=request.issue_type,
