@@ -18,3 +18,8 @@ venv/
 
 # Qdrant (if local data is here)
 storage/
+
+# Analytics
+*.db
+analytics.db
+

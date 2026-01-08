@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JIRA Requirement Assistant Usage Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; background: #f4f5f7; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #172b4d; margin-bottom: 20px; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        .btn {
+            padding: 8px 16px; border: 1px solid #dfe1e6; background: white; border-radius: 4px; cursor: pointer; font-weight: 500;
+        }
+        .btn.active {
+            background: #0052cc; color: white; border-color: #0052cc;
+        }
+        .btn:hover:not(.active) { background: #ebecf0; }
+    </style>
+</head>
+<body>
+    <h1>JIRA Requirement Assistant Usage Dashboard</h1>
+    
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>Activity Overview</h3>
+            <div class="controls" id="periodControls">
+                <button class="btn active" onclick="updateChart('daily')">Daily</button>
+                <button class="btn" onclick="updateChart('weekly')">Weekly</button>
+                <button class="btn" onclick="updateChart('monthly')">Monthly</button>
+            </div>
+        </div>
+        <div style="position: relative; height:400px; width:100%">
+             <canvas id="usageChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+
+        async function loadData(period) {
+            try {
+                const response = await fetch(`/api/v1/analytics/usage?period=${period}`);
+                const result = await response.json();
+                return result;
+            } catch (e) {
+                console.error("Failed to load analytics", e);
+                return { labels: [], data: [] };
+            }
+        }
+
+        async function updateChart(period) {
+            // Update UI buttons based on the requested period
+            document.querySelectorAll('.btn').forEach(btn => {
+                if (btn.textContent.trim().toLowerCase() === period) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            const data = await loadData(period);
+            const ctx = document.getElementById('usageChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Requests',
+                        data: data.data,
+                        backgroundColor: '#0052cc',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#ebecf0' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: `Usage (${period})` }
+                    }
+                }
+            });
+        }
+
+        // Initial load
+        updateChart('daily');
+    </script>
+</body>
+</html>
