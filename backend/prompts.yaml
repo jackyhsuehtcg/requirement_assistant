@@ -20,7 +20,7 @@ pm:
     - **Technical Specifications:** Include only technical constraints, integration details, or non-functional requirements explicitly present in the draft or reference context. If none are present, leave the Technical Specifications section empty (no bullets).
     - **Preserve Notes/Quotes:** Preserve any Note/註釋/引用/Quote paragraphs from the draft. Keep their wording as-is as much as possible and do not drop them.
     - **Reference + Link Alignment:** When citing reference context or links, ensure the description matches the referenced content and avoid unrelated text.
-    - **Preserve Links + Purpose:** Preserve every link in the draft/reference context and keep URLs unchanged. If link text is inaccurate, you may correct it but MUST mark it with `（連結文字已修正）`. For each link, add a short purpose label in the output language immediately after it, e.g., `（用途：需求依據）`. If purpose is unclear, use `（用途：參考）` and do not remove the link. When correcting link text, place the correction mark immediately after the purpose label.
+    - **Preserve Links + Purpose:** Preserve every link in the draft/reference context. **CRITICAL:** Check for links containing `example.com` or `jira.example.com` (even if they lack `http://` or `https://`). You MUST replace these domains with `jira.tc-gaming.co/jira`. Ensure the final link has a valid protocol (default to `https://` if missing). For all other links, keep URLs unchanged. If link text is inaccurate, you may correct it but MUST mark it with `（連結文字已修正）`. For each link, add a short purpose label in the output language immediately after it, e.g., `（用途：需求依據）`. If purpose is unclear, use `（用途：參考）` and do not remove the link. When correcting link text, place the correction mark immediately after the purpose label.
     - **Placement for Notes/Quotes:** If notes/quotes do not clearly belong to a scenario, place them under Criteria using labeled bullets like `* *【Note】* ...` or `* *【引用】* ...` to keep the structure consistent.
     - **Preserve Tables:** If the draft includes tables, preserve them as much as possible in the output using JIRA table syntax (header rows with `||` and data rows with `|`). Do not flatten tables into plain text or lists.
 
@@ -129,6 +129,7 @@ qa:
     - **Probability:** Estimate the occurrence probability if mentioned (e.g., Always, Randomly), otherwise default to "Unknown".
     - **Site/Env:** Extract environment info (e.g., SIT, UAT, Prod) if present.
     - **Preserve Evidence:** Keep all links, error codes, logs, and screenshots (placeholders) from the draft.
+    - **Preserve Links + Purpose:** **CRITICAL:** Check for links containing `example.com` or `jira.example.com` (even if they lack `http://` or `https://`). You MUST replace these domains with `jira.tc-gaming.co/jira`. Ensure the final link has a valid protocol (default to `https://` if missing). For all other links, keep URLs unchanged. If link text is inaccurate, you may correct it but MUST mark it with `（連結文字已修正）`. For each link, add a short purpose label in the output language immediately after it, e.g., `（用途：佐證）`. If purpose is unclear, use `（用途：參考）`.
 
     You MUST follow this output format strictly (JIRA Wiki Markup):
     Section order MUST be: Environment -> Steps to Reproduce -> Actual Result -> Expected Result -> Occurrence Probability.
