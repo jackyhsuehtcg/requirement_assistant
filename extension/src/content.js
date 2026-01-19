@@ -278,11 +278,19 @@ function showModal(initialText) {
           <textarea class="jra-textarea" id="jra-input-text">${escapeHtml(initialText)}</textarea>
           <div class="jra-visual-view" id="jra-input-visual" style="display:none;"></div>
           
-          <div style="margin-top: 10px; display:flex; align-items:center; gap:8px;">
+          <div style="margin-top: 10px; display:flex; flex-direction: column; gap: 8px;">
              <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#42526e;">
                 <input type="checkbox" id="jra-restrict-team" checked />
                 只搜尋同團隊 reference
              </label>
+             <div style="display:flex; align-items:center; gap:8px;">
+                 <label class="jra-input-label" for="jra-issue-type-override">輸出類別:</label>
+                 <select id="jra-issue-type-override" class="jra-select" style="font-size:12px; padding: 2px 24px 2px 8px; height: 28px; width: auto; background-position: right 8px center;">
+                    <option value="" selected>Auto (Default)</option>
+                    <option value="Bug">Bug</option>
+                    <option value="Change Request">Change Request</option>
+                 </select>
+             </div>
           </div>
 
           <div class="jra-input-options">
@@ -499,7 +507,9 @@ async function submitToAI(options = {}) {
 
   // Get Context
   const summary = document.querySelector('#summary-val')?.innerText || "Unknown Issue";
-  const issueType = document.querySelector('#type-val')?.innerText || "Story";
+  const issueTypeOriginal = document.querySelector('#type-val')?.innerText || "Story";
+  const issueTypeOverride = document.getElementById('jra-issue-type-override')?.value;
+  const issueType = issueTypeOverride || issueTypeOriginal;
   const componentName = getComponentName();
   const componentTeam = deriveComponentTeam(componentName);
   const restrictToTeam = document.getElementById('jra-restrict-team')?.checked ?? true;
