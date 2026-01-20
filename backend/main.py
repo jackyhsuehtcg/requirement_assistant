@@ -14,7 +14,7 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn")
 
-app = FastAPI(title="JIRA Requirement Assistant API")
+app = FastAPI(title="BA Agent API")
 
 # Templates
 templates_dir = os.path.join(os.path.dirname(__file__), "app/templates")

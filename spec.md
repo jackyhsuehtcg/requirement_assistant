@@ -1,4 +1,4 @@
-# Project Specification: JIRA Requirement Assistant
+# Project Specification: BA Agent
 
 ## 1. Overview
 A Chrome Extension paired with a Python Backend to assist Product Managers in refining JIRA issue descriptions. It utilizes RAG (Retrieval-Augmented Generation) to fetch relevant User Stories and Test Cases from a Qdrant vector database, ensuring consistency and completeness in requirements using BDD format.

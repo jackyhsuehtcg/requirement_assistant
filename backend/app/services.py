@@ -394,7 +394,7 @@ class LLMService:
             api_key = settings.OPENROUTER_API_KEY
             self.extra_headers = {
                 "HTTP-Referer": "https://github.com/hideman/requirement_assistant",
-                "X-Title": "JIRA Requirement Assistant",
+                "X-Title": "BA Agent",
             }
         else:
             logger.warning(f"Unknown LLM provider '{self.provider}'. Defaulting to OpenRouter.")

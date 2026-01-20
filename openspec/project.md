@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-JIRA Requirement Assistant: a Chrome extension plus a FastAPI backend that helps PMs refine JIRA issue descriptions into structured BDD-style requirements (user story narrative + acceptance criteria) using RAG over past JIRA context, user story maps, and test cases.
+BA Agent: a Chrome extension plus a FastAPI backend that helps PMs refine JIRA issue descriptions into structured BDD-style requirements (user story narrative + acceptance criteria) using RAG over past JIRA context, user story maps, and test cases.
 
 ## Tech Stack
 - Backend: Python 3.10+, FastAPI, Uvicorn, Pydantic, httpx, pydantic-settings, python-dotenv

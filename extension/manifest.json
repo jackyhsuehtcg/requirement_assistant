@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "JIRA Requirement Assistant",
+  "name": "BA Agent",
   "version": "1.0",
   "description": "AI-powered assistant to refine JIRA issue descriptions using BDD format.",
   "permissions": [
