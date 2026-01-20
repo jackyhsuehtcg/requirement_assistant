@@ -172,13 +172,14 @@ class RAGService:
         weights = {
             "jira": 2,
             "test": 2,
-            "usm": 1
+            "usm": 1,
+            "lark": 1
         }
         weight_sum = sum(weights.values())
         unit = max(total_limit // weight_sum, 0)
         limits = {key: value * unit for key, value in weights.items()}
         remainder = total_limit - sum(limits.values())
-        for key in ("jira", "test", "usm"):
+        for key in ("jira", "test", "usm", "lark"):
             if remainder <= 0:
                 break
             limits[key] += 1
@@ -371,6 +372,25 @@ class RAGService:
                 relevance_score=hit.score
             ))
 
+        lark_hits = self._search_collection(
+            collection_name=settings.QDRANT_COLLECTION_LARK_WIKI,
+            vector=vector,
+            limit=limits["lark"],
+            team_hint=team_hint,
+            label="Lark Wiki",
+            restrict_to_team=restrict_to_team
+        )
+        for hit in lark_hits:
+            payload = hit.payload
+            # Extract content more robustly if needed, currently assuming text field
+            content = f"Wiki: {payload.get('title')}\nContent: {payload.get('text') or payload.get('content') or ''}"
+            results.append(RetrievedReference(
+                source_type="lark_wiki",
+                title=payload.get("title", "Unknown Wiki"),
+                content_excerpt=content,
+                relevance_score=hit.score
+            ))
+
         results.sort(key=lambda x: x.relevance_score, reverse=True)
         return results
 
@@ -440,6 +460,16 @@ class LLMService:
         
         user_template = prompt_config.get("user_prompt_template", "")
         
+        # Format User Answers (Clarifications)
+        answers_text = ""
+        if request.user_answers:
+            answers_text = "User Clarifications (You MUST incorporate these answers to refine the spec):\n"
+            for item in request.user_answers:
+                q = item.get('question', '')
+                a = item.get('answer', '')
+                if q and a:
+                    answers_text += f"Q: {q}\nA: {a}\n---\n"
+        
         user_prompt = user_template.format(
             issue_type=request.issue_type,
             summary=request.summary,
@@ -447,6 +477,10 @@ class LLMService:
             draft=request.current_description,
             output_language=lang_config["language_instruction"]
         )
+        
+        if answers_text:
+            user_prompt += "\n\n" + answers_text
+            user_prompt += "\n\nIMPORTANT: You must regenerate the FULL requirement document (User Story, Criteria, etc.) incorporating the above clarifications. Do NOT just list the answers."
 
         try:
             completion = await self.client.chat.completions.create(

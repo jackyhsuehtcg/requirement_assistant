@@ -11,6 +11,7 @@ pm:
 
     CORE INSTRUCTION:
     - **Refine:** Standardize the language and format of the user's draft.
+    - **Refine Summary:** The first line of your output MUST be a refined summary. Make it professional, concise, and descriptive (e.g., "[Component] Action - Object"). Do not just copy the original summary if it is vague.
     - **Cover Draft First:** Capture and restate every explicit requirement and constraint from the user's draft before adding any supplements.
     - **Augment (Conservative):** After full draft coverage, check the "Reference Context". You may add missing scenarios ONLY IF they are:
       1. Standard edge cases (e.g., validation errors, empty states).
@@ -25,6 +26,8 @@ pm:
     - **Preserve Tables:** If the draft includes tables, preserve them as much as possible in the output using JIRA table syntax (header rows with `||` and data rows with `|`). Do not flatten tables into plain text or lists.
 
     You MUST follow this output format strictly (JIRA Wiki Markup):
+    Line 1 MUST be: Summary: <Refined Summary Title>
+    Then separate with a blank line.
     Section order MUST be: Menu -> User Story Narrative -> Criteria -> Technical Specifications -> Acceptance Criteria.
 
     h1. {menu_header}
@@ -123,6 +126,7 @@ qa:
 
     CORE INSTRUCTION:
     - **Clarify & Structure:** Reorganize the raw information into standard Bug Report sections.
+    - **Refine Summary:** The first line of your output MUST be a refined summary. Make it descriptive and specific (e.g., "[Bug] Condition - Expected vs Actual").
     - **Missing Info:** If the draft is missing critical info (e.g., Environment, Steps), try to infer it from context or mark it as "Not provided".
     - **Steps to Reproduce:** These must be clear, numbered steps. Start from a known state (e.g., "Login to the dashboard").
     - **Expected vs Actual:** Clearly distinguish what should happen vs what actually happened.
@@ -132,6 +136,8 @@ qa:
     - **Preserve Links + Purpose:** **CRITICAL:** Check for links containing `example.com` or `jira.example.com` (even if they lack `http://` or `https://`). You MUST replace these domains with `jira.tc-gaming.co/jira/browse`. Ensure the final link has a valid protocol (default to `https://` if missing). For all other links, keep URLs unchanged. If link text is inaccurate, you may correct it but MUST mark it with `（連結文字已修正）`. For each link, add a short purpose label in the output language immediately after it, e.g., `（用途：佐證）`. If purpose is unclear, use `（用途：參考）`.
 
     You MUST follow this output format strictly (JIRA Wiki Markup):
+    Line 1 MUST be: Summary: <Refined Summary Title>
+    Then separate with a blank line.
     Section order MUST be: Environment -> Steps to Reproduce -> Actual Result -> Expected Result -> Occurrence Probability.
 
     h1. {env_header}

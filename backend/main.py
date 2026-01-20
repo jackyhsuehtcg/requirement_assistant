@@ -89,11 +89,22 @@ async def refine_description(
         )
     
     # 2. Call LLM
-    refined_text = await llm_service.refine_description(request, references)
+    refined_text_raw = await llm_service.refine_description(request, references)
     
+    # Parse Summary
+    refined_summary = None
+    refined_content = refined_text_raw
+    
+    # Simple parsing: Look for first line starting with "Summary:"
+    lines = refined_text_raw.split('\n')
+    if lines and lines[0].strip().lower().startswith("summary:"):
+        refined_summary = lines[0].split(":", 1)[1].strip()
+        refined_content = "\n".join(lines[1:]).strip()
+
     return {
         "original_text": request.current_description,
-        "refined_content": refined_text,
+        "refined_summary": refined_summary,
+        "refined_content": refined_content,
         "references": references
     }
 

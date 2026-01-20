@@ -73,6 +73,28 @@
   color: #5e6c84;
 }
 
+.jra-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #5e6c84;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.jra-icon-btn:hover {
+  background-color: rgba(9, 30, 66, 0.08); /* Light gray hover */
+  color: #172b4d;
+}
+
+.jra-icon-btn.collapsed {
+  color: #a5adba; /* Dimmed when sidebar is hidden */
+}
+
 /* 3-Column Layout */
 .jra-modal-body {
   flex: 1;
@@ -85,9 +107,10 @@
   box-sizing: border-box;
 }
 
-/* Column 1: Input (Left) */
-.jra-col-input {
-  flex: 1.5;
+/* Unified Column Style */
+.jra-col-input,
+.jra-col-output,
+.jra-col-questions {
   display: flex;
   flex-direction: column;
   background: white;
@@ -97,33 +120,149 @@
   height: 100%; /* Fill body height */
   box-sizing: border-box;
   overflow: hidden; /* Contain children */
+  min-width: 0; /* Prevent flex overflow */
 }
 
-/* Column 2: Output (Middle) */
+.jra-col-input,
 .jra-col-output {
-  flex: 1.5;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  padding: 15px;
-  border: 1px solid #dfe1e6;
-  border-radius: 8px;
-  height: 100%; /* Fill body height */
-  box-sizing: border-box;
-  overflow: hidden; /* Contain children */
+  flex: 2; /* 40% */
 }
 
-/* Column 3: Refs (Right) */
-.jra-col-ref {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: #f4f5f7;
-  padding: 15px;
-  border-radius: 8px;
-  height: 100%; /* Fill body height */
+.jra-col-questions {
+  flex: 1.5; /* 20% */
+}
+
+
+/* Col 3 specific (if needed, but kept unified for consistency) */
+/* .jra-col-questions was previously .jra-col-ref */
+
+/* Scrollable container for Col 3 content */
+.jra-col3-content {
+    display: none;
+    flex-direction: column;
+    flex: 1 1 0; /* Grow, Shrink, Basis 0 - Forces correct height calc */
+    overflow-y: auto; /* Enable scrolling */
+    overscroll-behavior: contain; /* Prevent scroll chaining to parent */
+    min-height: 0; /* Crucial for nested flex scrolling */
+    padding-right: 4px; /* Space for scrollbar */
+    padding-bottom: 20px; /* Ensure button visibility */
+}
+
+/* Submit Button Disabled State */
+#jra-submit-answers.disabled {
+    background-color: #ebecf0;
+    color: #a5adba;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.jra-col3-content.active {
+    display: flex;
+}
+
+/* Question Interactivity */
+.jra-question-card {
+    background: #f4f5f7;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+    width: 100%; /* Ensure card is full width */
+    box-sizing: border-box;
+}
+
+.jra-question-card.skipped {
+    background: #fff;
+    border-color: #dfe1e6;
+}
+
+.jra-question-card.skipped .jra-q-input {
+    display: none; /* Collapse Input */
+}
+
+/* ... existing code ... */
+
+.jra-q-input {
+    width: 100% !important; /* Force full width */
+    display: block;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 12px;
+    min-height: 40px;
+    box-sizing: border-box; /* Include padding in width */
+    font-family: inherit;
+    resize: vertical;
+    margin-top: 4px;
+}
+
+.jra-question-card.skipped {
+    background: #fff;
+    border-color: #dfe1e6;
+}
+
+.jra-question-card.skipped .jra-q-input {
+    display: none; /* Collapse Input */
+}
+
+.jra-q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Center align items */
+    gap: 8px;
+}
+/* Ensure header has no bottom margin when skipped to save space */
+.jra-question-card.skipped .jra-q-header {
+    margin-bottom: 0;
+}
+
+.jra-skip-btn {
+    background: none;
+    border: 1px solid #dfe1e6;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    color: #6b778c;
+    padding: 2px 6px;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.jra-skip-btn:hover {
+    background: #ebecf0;
+    color: #172b4d;
+}
+
+/* Skipped State for Button (Highlight) */
+.jra-question-card.skipped .jra-skip-btn {
+    background: #0052cc; /* Blue highlight */
+    color: white;
+    border-color: #0052cc;
+}
+
+/* Inputs (Text Input) */
+.jra-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dfe1e6;
+  border-radius: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: #172b4d;
   box-sizing: border-box;
-  overflow: hidden; /* Contain children */
+  margin-bottom: 8px;
+  height: 36px; /* Explicit height */
+}
+
+.jra-input:focus {
+  border-color: #4c9aff;
+  outline: none;
+}
+
+.jra-input[readonly] {
+  background-color: #f4f5f7;
+  color: #505f79;
+  cursor: default;
 }
 
 /* Container for Ref List to scroll */

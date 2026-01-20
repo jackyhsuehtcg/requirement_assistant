@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION_USM: str = "usm_nodes"
     QDRANT_COLLECTION_TEST: str = "test_cases"
     QDRANT_COLLECTION_JIRA: str = "jira_references"
+    QDRANT_COLLECTION_LARK_WIKI: str = "lark_wiki"
     LOG_LEVEL: str = "INFO"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
