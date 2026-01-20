@@ -217,21 +217,23 @@ function showModal(initialText, initialSummary = "", restoredState = null) {
               </div>
            </div>
            
-           <div class="jra-col3-content" id="jra-tab-context">
-              <div class="jra-question-label">Reference Context</div>
+           <div class="jra-col3-content" id="jra-tab-context" style="overflow: auto;">
               <div id="jra-references">
                  <p style="color:#999">No specific references found.</p>
               </div>
-              <button class="jra-btn jra-btn-secondary" id="jra-resuggest" disabled style="margin-top:10px; width:100%;">
-                Refine with References
+              <button class="jra-btn jra-btn-primary" id="jra-resuggest" disabled style="margin-top:10px; width:100%;">
+                 Refine with References
               </button>
            </div>
         </div>
 
       </div>
       <div class="jra-modal-footer">
-        <button class="jra-btn" id="jra-close-btn-footer">Close</button>
-        <button class="jra-btn jra-btn-primary" onclick="copyResult()">Copy Result</button>
+        <span class="jra-version">v1.0.1</span>
+        <div style="display:flex; gap:12px;">
+            <button class="jra-btn" id="jra-close-btn-footer">Close</button>
+            <button class="jra-btn jra-btn-primary" onclick="copyResult()">Copy Result</button>
+        </div>
       </div>
     </div>
   `;
@@ -385,10 +387,26 @@ async function submitToAI(e) {
   const issueTypeOverride = document.getElementById('jra-issue-type-override')?.value;
   const issueType = issueTypeOverride || issueTypeOriginal;
   const componentName = getComponentName();
-  const componentTeam = deriveComponentTeam(componentName);
+  const componentTeam = null; // Let backend derive it
   const restrictToTeam = document.getElementById('jra-restrict-team')?.checked ?? true;
   const outputLanguage = document.getElementById('jra-output-language')?.value || "zh-TW";
-  const selectedReferences = document.getElementById('jra-references')?.dataset.selected || null;
+  let selectedReferences = null;
+
+  // 濾除未勾選的 Reference
+  if (lastReferences && lastReferences.length > 0) {
+    const refChecks = document.querySelectorAll('.jra-ref-check');
+    if (refChecks.length > 0) {
+      selectedReferences = [];
+      refChecks.forEach(chk => {
+        if (chk.checked) {
+          const idx = parseInt(chk.dataset.idx, 10);
+          if (lastReferences[idx]) {
+            selectedReferences.push(lastReferences[idx]);
+          }
+        }
+      });
+    }
+  }
 
   if (!inputText.trim()) {
     alert("Please enter some text first.");
@@ -426,10 +444,12 @@ async function submitToAI(e) {
     };
 
     // Check if we have references stored in global
-    if (lastReferences && lastReferences.length > 0) {
-      // Simple logic: send all as context if re-suggesting, or let backend verify
-      // For now, simpler payload is fine as backend handles RAG if not provided
-      // or we could pass IDs. Kept simple as per original logic.
+    // If selectedReferences is derived from UI, use it. 
+    // Otherwise if we have lastReferences but no UI checks (shouldn't happen if UI matches), 
+    // defaulting to backend search is fine (selected_references: null).
+
+    if (selectedReferences) {
+      payload.selected_references = selectedReferences;
     }
 
     const apiUrl = await getApiUrl();
@@ -725,10 +745,13 @@ function renderReferences(refs) {
   }
 
   if (resuggestBtn) resuggestBtn.disabled = false;
-  container.innerHTML = refs.map(ref => `
+  container.innerHTML = refs.map((ref, idx) => `
     <div class="jra-reference-card">
       <div class="jra-ref-header" onclick="this.nextElementSibling.classList.toggle('collapsed'); this.querySelector('.jra-ref-toggle').setAttribute('aria-expanded', !this.nextElementSibling.classList.contains('collapsed'))">
-        <strong class="jra-ref-title">[${ref.source_type.toUpperCase()}] ${escapeHtml(ref.title)}</strong>
+        <div class="jra-ref-check-wrap" onclick="event.stopPropagation()">
+            <input type="checkbox" class="jra-ref-check" data-idx="${idx}" checked title="Include this reference" />
+        </div>
+        <strong class="jra-ref-title" style="margin-left:8px;">[${ref.source_type.toUpperCase()}] ${escapeHtml(ref.title)}</strong>
         <button class="jra-ref-toggle" type="button" aria-expanded="false" aria-label="展開內容" title="展開">
           <svg class="jra-ref-toggle-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
             <path d="M4 2 L8 6 L4 10 Z"></path>
@@ -762,6 +785,8 @@ function toggleViewMode(target, mode) {
     textarea.style.display = 'block';
     visualDiv.style.display = 'none';
   } else {
+    // Force update visual content
+    visualDiv.innerHTML = simpleWikiParser(textarea.value);
     textarea.style.display = 'none';
     visualDiv.style.display = 'block';
   }
@@ -786,14 +811,7 @@ function getComponentName() {
   return componentEl.innerText.trim();
 }
 
-// Simple heuristic mapping
-function deriveComponentTeam(componentName) {
-  if (!componentName) return "Unknown";
-  // Example logic
-  if (componentName.includes("Backend")) return "Backend";
-  if (componentName.includes("Frontend")) return "Frontend";
-  return "General";
-}
+
 
 // --- Utility: Wiki Parser & Helpers ---
 

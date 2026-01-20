@@ -296,28 +296,38 @@
 .jra-ref-header {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start; /* Top align for multiline titles */
+  gap: 12px;
+  padding: 4px 0; /* Reduced vertical padding */
+  cursor: pointer;
 }
 
 .jra-ref-check-wrap {
   display: inline-flex;
   align-items: center;
+  height: 20px; /* Match effective line-height of title for visual centering relative to first line */
 }
 
 .jra-ref-check {
   margin: 0;
+  cursor: pointer;
+  width: 16px; 
+  height: 16px;
 }
 
 .jra-ref-title {
   color: #0052cc;
   flex: 1;
   min-width: 0;
+  font-size: 14px; /* Increased from 12px */
+  font-weight: 600; /* Bolder */
+  line-height: 1.4;
+  margin-top: 1px; /* Align check box */
 }
 
 .jra-ref-toggle {
-  width: 20px;
-  height: 20px;
+  width: 24px; /* Larger hit area */
+  height: 24px;
   border: none;
   background: none;
   cursor: pointer;
@@ -326,6 +336,7 @@
   justify-content: center;
   margin-left: auto;
   padding: 0;
+  color: #5e6c84;
 }
 
 .jra-ref-toggle:hover {
@@ -346,8 +357,9 @@
 
 .jra-ref-content {
   color: #42526e;
-  margin-top: 4px;
+  margin-top: 2px; /* Reduced margin */
   white-space: pre-wrap;
+  font-size: 12px; /* Smaller content */
 }
 
 .jra-ref-content.collapsed {
@@ -515,9 +527,16 @@
   padding: 16px 24px;
   border-top: 1px solid #dfe1e6;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between; /* Change to space-between for version number */
+  align-items: center;
   gap: 12px;
   background: white;
+}
+
+.jra-version {
+  font-size: 11px;
+  color: #97a0af;
+  margin-right: auto; /* Push buttons to right if justify-content fails */
 }
 
 /* Generic Tabs (Unified Style) */
