@@ -1,7 +1,12 @@
 import logging
+import os
 import re
 from typing import Dict, List, Optional, get_args
 from openai import AsyncOpenAI, APIConnectionError, RateLimitError, APIStatusError
+
+# Suppress advisory warnings from transformers tokenizers used by FlagEmbedding.
+os.environ.setdefault("TRANSFORMERS_NO_ADVISORY_WARNINGS", "1")
+
 from FlagEmbedding import FlagModel
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qdrant_models
@@ -172,14 +177,13 @@ class RAGService:
         weights = {
             "jira": 2,
             "test": 2,
-            "usm": 1,
-            "lark": 1
+            "usm": 1
         }
         weight_sum = sum(weights.values())
         unit = max(total_limit // weight_sum, 0)
         limits = {key: value * unit for key, value in weights.items()}
         remainder = total_limit - sum(limits.values())
-        for key in ("jira", "test", "usm", "lark"):
+        for key in ("jira", "test", "usm"):
             if remainder <= 0:
                 break
             limits[key] += 1
@@ -368,25 +372,6 @@ class RAGService:
             results.append(RetrievedReference(
                 source_type="jira_reference",
                 title=payload.get("summary") or payload.get("title") or "Unknown JIRA",
-                content_excerpt=content,
-                relevance_score=hit.score
-            ))
-
-        lark_hits = self._search_collection(
-            collection_name=settings.QDRANT_COLLECTION_LARK_WIKI,
-            vector=vector,
-            limit=limits["lark"],
-            team_hint=team_hint,
-            label="Lark Wiki",
-            restrict_to_team=restrict_to_team
-        )
-        for hit in lark_hits:
-            payload = hit.payload
-            # Extract content more robustly if needed, currently assuming text field
-            content = f"Wiki: {payload.get('title')}\nContent: {payload.get('text') or payload.get('content') or ''}"
-            results.append(RetrievedReference(
-                source_type="lark_wiki",
-                title=payload.get("title", "Unknown Wiki"),
                 content_excerpt=content,
                 relevance_score=hit.score
             ))

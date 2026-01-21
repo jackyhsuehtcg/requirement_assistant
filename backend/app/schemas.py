@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Literal
 
 class RetrievedReference(BaseModel):
-    source_type: Literal["usm_node", "test_case", "jira_reference", "lark_wiki"]
+    source_type: Literal["usm_node", "test_case", "jira_reference"]
     title: str
     content_excerpt: str
     relevance_score: float
